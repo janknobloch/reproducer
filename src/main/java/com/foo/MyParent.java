@@ -11,7 +11,7 @@ public class MyParent {
     long id;
     String name;
     
-    @Reference
+    @Reference(idOnly = true, lazy = true)
     MyChild child;
     public MyParent() {
         

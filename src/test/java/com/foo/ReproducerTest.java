@@ -42,7 +42,7 @@ public class ReproducerTest extends BottleRocketTest {
         return BottleRocket.DEFAULT_VERSION;
     }
 
-    @Test(expected=NullPointerException.class)
+    @Test
     public void reproduce() {
         
       //ADD PARENT
@@ -53,21 +53,24 @@ public class ReproducerTest extends BottleRocketTest {
         datastore.save(c);
         
         //INSERT CHILD TO PARENT WORKS FINE
-        UpdateResult childInsertResult = datastore.find(MyParent.class).filter(Filters.eq("_id", 0L)).update(UpdateOperators.set("child", c)).execute();
+        datastore.find(MyParent.class).filter(Filters.eq("_id", 0L)).update(UpdateOperators.set("child", c)).execute();
        
-        //FIND CHILD
-        MyChild childFound = datastore.find(MyChild.class).filter(Filters.eq("_id", 0L)).first();
-       //FIND PARENT
-        MyParent parentFound = datastore.find(MyParent.class).filter(Filters.eq("_id", 0L)).first();
+        //Child found
+        MyChild child = datastore.find(MyChild.class).filter(Filters.eq("_id", 0L)).first();
+       //Parent found
+        MyParent parent = datastore.find(MyParent.class).filter(Filters.eq("_id", 0L)).first();
+      System.out.println(child);
+      System.out.println(parent);
       
-        
-      //UNSET CHILD CAUSES NPE USING THE SAME FILTER FIND AS ABOVE
-        
-        Assert.assertThrows(NullPointerException.class,
-                ()->{
-                    datastore.find(MyParent.class).filter(Filters.eq("_id", 0L)).update(UpdateOperators.unset("child")).execute();
-                }); 
-        
+      //Unset removes the referenced object(child in child collection) but keeps the reference intact or even throws an NPE 
+      datastore.find(MyParent.class).filter(Filters.eq("_id", 0L)).update(UpdateOperators.unset("child")).execute();
+      
+      //Child should be still in its collection
+      Assert.assertNotNull(datastore.find(MyChild.class).filter(Filters.eq("_id", 0L)).first());
+      //But parent should have child removed.
+      Assert.assertNull(datastore.find(MyParent.class).filter(Filters.eq("_id", 0L)).first().child);  
     }
+
+    
 
 }
